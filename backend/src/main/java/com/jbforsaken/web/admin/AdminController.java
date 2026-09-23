@@ -80,6 +80,22 @@ public class AdminController {
         return users.findAll(PageRequest.of(0, 100, Sort.by(Sort.Direction.DESC, "lastLoginAt"))).getContent();
     }
 
+    @GetMapping("/users/search")
+    public List<WebUser> searchUsers(Authentication auth, @RequestParam String q) {
+        guard.requireAdmin(auth);
+        String query = q == null ? "" : q.trim();
+        if (query.isBlank()) {
+            return users.findAll(PageRequest.of(0, 100, Sort.by(Sort.Direction.DESC, "lastLoginAt"))).getContent();
+        }
+
+        try {
+            long steamId64 = Long.parseLong(query);
+            return users.findById(steamId64).map(List::of).orElseGet(List::of);
+        } catch (NumberFormatException ignored) {
+            return users.findTop100ByNicknameContainingIgnoreCaseOrderByLastLoginAtDesc(query);
+        }
+    }
+
     @GetMapping("/news")
     public List<NewsPost> news(Authentication auth) {
         guard.requireAdmin(auth);
