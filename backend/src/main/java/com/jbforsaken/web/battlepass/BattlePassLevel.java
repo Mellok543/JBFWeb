@@ -23,6 +23,13 @@ public class BattlePassLevel {
 
     protected BattlePassLevel() {}
 
+    public BattlePassLevel(long seasonId, int levelNumber, int xpRequired, String rewardTitle) {
+        this.seasonId = seasonId;
+        this.levelNumber = levelNumber;
+        this.xpRequired = xpRequired;
+        this.rewardTitle = rewardTitle;
+    }
+
     public Long getId() { return id; }
     public Long getSeasonId() { return seasonId; }
     public int getLevelNumber() { return levelNumber; }
