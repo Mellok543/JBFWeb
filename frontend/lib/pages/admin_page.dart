@@ -18,7 +18,7 @@ class _AdminPageState extends State<AdminPage> with SingleTickerProviderStateMix
   @override
   void initState() {
     super.initState();
-    tabs = TabController(length: 7, vsync: this);
+    tabs = TabController(length: 8, vsync: this);
   }
 
   @override
@@ -49,6 +49,7 @@ class _AdminPageState extends State<AdminPage> with SingleTickerProviderStateMix
           tabs: const [
             Tab(text: 'Dashboard'),
             Tab(text: 'Новости'),
+            Tab(text: 'Правила'),
             Tab(text: 'Товары'),
             Tab(text: 'Заказы'),
             Tab(text: 'Игроки'),
@@ -64,6 +65,7 @@ class _AdminPageState extends State<AdminPage> with SingleTickerProviderStateMix
             children: const [
               _Dashboard(),
               _News(),
+              _Rules(),
               _Products(),
               _Orders(),
               _Users(),
@@ -499,5 +501,134 @@ class _Error extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Center(
     child: Text(text, style: const TextStyle(color: JbfColors.error)),
+  );
+}
+
+
+class _Rules extends StatefulWidget {
+  const _Rules();
+
+  @override
+  State<_Rules> createState() => _RulesState();
+}
+
+class _RulesState extends State<_Rules> {
+  late Future<List<Map<String, dynamic>>> future;
+
+  @override
+  void initState() {
+    super.initState();
+    reload();
+  }
+
+  void reload() => future = fetchAdminRules(apiClient);
+
+  Future<void> edit([Map<String, dynamic>? item]) async {
+    final title = TextEditingController(text: item?['title']?.toString() ?? '');
+    final body = TextEditingController(text: item?['body']?.toString() ?? '');
+    final sort = TextEditingController(text: item == null ? '10' : '${item['sortOrder']}');
+    bool active = item?['active'] != false;
+
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Text(item == null ? 'Новое правило' : 'Редактировать правило'),
+          content: SizedBox(
+            width: 560,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(controller: sort, decoration: const InputDecoration(labelText: 'Порядок')),
+                TextField(controller: title, decoration: const InputDecoration(labelText: 'Заголовок')),
+                TextField(
+                  controller: body,
+                  maxLines: 8,
+                  decoration: const InputDecoration(
+                    labelText: 'Текст',
+                    helperText: 'Каждый пункт можно писать с новой строки',
+                  ),
+                ),
+                SwitchListTile(
+                  value: active,
+                  onChanged: (v) => setDialogState(() => active = v),
+                  title: const Text('Опубликовано'),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Отмена')),
+            FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Сохранить')),
+          ],
+        ),
+      ),
+    );
+
+    if (ok != true) return;
+    await saveAdminRule(
+      apiClient,
+      id: item?['id'] as int?,
+      sortOrder: int.tryParse(sort.text) ?? 0,
+      title: title.text,
+      body: body.text,
+      active: active,
+    );
+    setState(reload);
+  }
+
+  @override
+  Widget build(BuildContext context) => Column(
+    children: [
+      Align(
+        alignment: Alignment.centerLeft,
+        child: FilledButton.icon(
+          onPressed: () => edit(),
+          icon: const Icon(Icons.add),
+          label: const Text('ДОБАВИТЬ ПРАВИЛО'),
+        ),
+      ),
+      const SizedBox(height: 10),
+      Expanded(
+        child: FutureBuilder<List<Map<String, dynamic>>>(
+          future: future,
+          builder: (context, s) {
+            if (s.connectionState != ConnectionState.done) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (s.hasError) return _Error(s.error.toString());
+            final rows = s.data ?? const [];
+            return ListView.builder(
+              itemCount: rows.length,
+              itemBuilder: (context, i) {
+                final x = rows[i];
+                return ListTile(
+                  leading: Text('#${x['sortOrder']}'),
+                  title: Text(x['title'].toString()),
+                  subtitle: Text(
+                    x['body'].toString(),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  trailing: Wrap(
+                    children: [
+                      Icon(x['active'] == true ? Icons.visibility_outlined : Icons.visibility_off_outlined),
+                      IconButton(onPressed: () => edit(x), icon: const Icon(Icons.edit_outlined)),
+                      IconButton(
+                        onPressed: () async {
+                          await deleteAdminRule(apiClient, x['id'] as int);
+                          setState(reload);
+                        },
+                        icon: const Icon(Icons.delete_outline),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
+        ),
+      ),
+    ],
   );
 }
