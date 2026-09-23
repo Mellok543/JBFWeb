@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../api/api_client.dart';
+import '../api/portal_api.dart';
 import '../theme/jbf_theme.dart';
 import '../widgets/page_shell.dart';
 
@@ -10,52 +12,47 @@ class RulesPage extends StatelessWidget {
     return PageShell(
       eyebrow: 'Правила',
       title: 'Правила JBFORSAKEN',
-      subtitle: 'Структурированная версия правил. Финальный текст наказаний и отдельных исключений должен синхронизироваться с правилами игрового сервера.',
-      children: const [
-        _RuleGroup(
-          number: '01',
-          title: 'Общие правила',
-          items: [
-            'Уважайте других игроков и администрацию.',
-            'Запрещены намеренные помехи игровому процессу, эксплуатация багов и обход ограничений.',
-            'Незнание правил не освобождает от ответственности.',
-          ],
-        ),
-        SizedBox(height: 14),
-        _RuleGroup(
-          number: '02',
-          title: 'Заключённые',
-          items: [
-            'Выполняйте корректные приказы командира в рамках режима.',
-            'Игровые действия, связанные с побегом, бунтом и LR, регулируются правилами конкретной ситуации.',
-            'Запрещено намеренно затягивать раунд без игровой цели.',
-          ],
-        ),
-        SizedBox(height: 14),
-        _RuleGroup(
-          number: '03',
-          title: 'Охрана и командир',
-          items: [
-            'CT обязан понимать правила Jailbreak до игры за охрану.',
-            'Командир отвечает за понятные приказы и проведение раунда.',
-            'Запрещены необоснованные убийства заключённых и злоупотребление полномочиями.',
-          ],
-        ),
-        SizedBox(height: 14),
-        _RuleGroup(
-          number: '04',
-          title: 'Чат и коммуникация',
-          items: [
-            'Не используйте голосовой и текстовый чат для спама и намеренных помех.',
-            'Запрещена публикация вредоносных ссылок и персональных данных других людей.',
-            'Конфликты с администрацией решаются через установленные каналы проекта.',
-          ],
-        ),
-        SizedBox(height: 14),
-        InfoStrip(
-          icon: Icons.info_outline_rounded,
-          title: 'Нужна синхронизация с финальными правилами',
-          text: 'Этот экран уже готов технически. Перед публикацией production-версии сюда нужно перенести утверждённый полный свод правил JBFORSAKEN и таблицу наказаний.',
+      subtitle: 'Актуальная версия правил загружается из backend и может редактироваться через админ-панель.',
+      children: [
+        FutureBuilder<List<Map<String, dynamic>>>(
+          future: fetchRules(apiClient),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState != ConnectionState.done) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (snapshot.hasError) {
+              return InfoStrip(
+                icon: Icons.error_outline_rounded,
+                title: 'Правила недоступны',
+                text: snapshot.error.toString(),
+              );
+            }
+
+            final rules = snapshot.data ?? const [];
+            if (rules.isEmpty) {
+              return const InfoStrip(
+                icon: Icons.gavel_outlined,
+                title: 'Правила пока не опубликованы',
+                text: 'Администратор может добавить их через /admin.',
+              );
+            }
+
+            return Column(
+              children: [
+                for (int i = 0; i < rules.length; i++) ...[
+                  _RuleGroup(
+                    number: (i + 1).toString().padLeft(2, '0'),
+                    title: rules[i]['title']?.toString() ?? '',
+                    items: (rules[i]['body']?.toString() ?? '')
+                        .split('\n')
+                        .where((x) => x.trim().isNotEmpty)
+                        .toList(),
+                  ),
+                  if (i != rules.length - 1) const SizedBox(height: 14),
+                ],
+              ],
+            );
+          },
         ),
       ],
     );
