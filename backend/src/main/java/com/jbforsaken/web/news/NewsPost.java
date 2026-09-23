@@ -31,6 +31,12 @@ public class NewsPost {
         this.publishedAt = publishedAt;
     }
 
+    public void update(String title, String body, boolean pinned) {
+        this.title = title;
+        this.body = body;
+        this.pinned = pinned;
+    }
+
     public Long getId() { return id; }
     public String getTitle() { return title; }
     public String getBody() { return body; }
