@@ -24,6 +24,13 @@ public class NewsPost {
 
     protected NewsPost() {}
 
+    public NewsPost(String title, String body, boolean pinned, Instant publishedAt) {
+        this.title = title;
+        this.body = body;
+        this.pinned = pinned;
+        this.publishedAt = publishedAt;
+    }
+
     public Long getId() { return id; }
     public String getTitle() { return title; }
     public String getBody() { return body; }
