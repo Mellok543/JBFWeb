@@ -38,15 +38,29 @@ class ApiClient {
   }
 
   Future<Map<String, dynamic>> post(String path, {Map<String, dynamic>? body}) async {
+    return _send('POST', path, body: body);
+  }
+
+  Future<Map<String, dynamic>> put(String path, {Map<String, dynamic>? body}) async {
+    return _send('PUT', path, body: body);
+  }
+
+  Future<void> delete(String path) async {
+    final response = await _client.delete(Uri.parse('$apiBaseUrl$path'), headers: _authHeaders());
+    _throwIfNotOk(response);
+  }
+
+  Future<Map<String, dynamic>> _send(String method, String path, {Map<String, dynamic>? body}) async {
     final headers = _authHeaders();
     headers['Content-Type'] = 'application/json';
     headers['Idempotency-Key'] = _uuid.v4();
 
-    final response = await _client.post(
-      Uri.parse('$apiBaseUrl$path'),
-      headers: headers,
-      body: body != null ? jsonEncode(body) : null,
-    );
+    final request = http.Request(method, Uri.parse('$apiBaseUrl$path'));
+    request.headers.addAll(headers);
+    if (body != null) request.body = jsonEncode(body);
+
+    final streamed = await _client.send(request);
+    final response = await http.Response.fromStream(streamed);
     _throwIfNotOk(response);
     return response.body.isEmpty ? <String, dynamic>{} : jsonDecode(response.body) as Map<String, dynamic>;
   }
