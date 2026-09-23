@@ -5,8 +5,6 @@ import 'package:uuid/uuid.dart';
 const String apiBaseUrl =
     String.fromEnvironment('API_BASE_URL', defaultValue: 'http://127.0.0.1:5080');
 
-/// Set by the auth layer (Task 11) once a JWT is available; read by every
-/// request this client makes. `null` means "not logged in".
 String? currentAuthToken;
 
 class ApiException implements Exception {
@@ -28,7 +26,15 @@ class ApiClient {
   Future<Map<String, dynamic>> get(String path) async {
     final response = await _client.get(Uri.parse('$apiBaseUrl$path'), headers: _authHeaders());
     _throwIfNotOk(response);
+    if (response.body.isEmpty) return <String, dynamic>{};
     return jsonDecode(response.body) as Map<String, dynamic>;
+  }
+
+  Future<List<dynamic>> getList(String path) async {
+    final response = await _client.get(Uri.parse('$apiBaseUrl$path'), headers: _authHeaders());
+    _throwIfNotOk(response);
+    if (response.body.isEmpty) return <dynamic>[];
+    return jsonDecode(response.body) as List<dynamic>;
   }
 
   Future<Map<String, dynamic>> post(String path, {Map<String, dynamic>? body}) async {
@@ -46,7 +52,7 @@ class ApiClient {
   }
 
   Map<String, String> _authHeaders() {
-    final headers = <String, String>{};
+    final headers = <String, String>{'Accept': 'application/json'};
     if (currentAuthToken != null) {
       headers['Authorization'] = 'Bearer $currentAuthToken';
     }
