@@ -39,6 +39,15 @@ public class StoreProduct {
         this.sortOrder = sortOrder;
     }
 
+    public void update(String name, String description, String category, int priceCents, boolean active, int sortOrder) {
+        this.name = name;
+        this.description = description;
+        this.category = category;
+        this.priceCents = priceCents;
+        this.active = active;
+        this.sortOrder = sortOrder;
+    }
+
     public String getCode() { return code; }
     public String getName() { return name; }
     public String getDescription() { return description; }
