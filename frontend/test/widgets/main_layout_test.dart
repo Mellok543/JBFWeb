@@ -24,7 +24,18 @@ void main() {
     authNotifier.isAdmin = false;
   });
 
+  Future<void> setDesktopSize(WidgetTester tester) async {
+    tester.view.physicalSize = const Size(1280, 900);
+    tester.view.devicePixelRatio = 1;
+  }
+
   testWidgets('shows Steam login when logged out', (tester) async {
+    await setDesktopSize(tester);
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
     final router = _router();
     await tester.pumpWidget(MaterialApp.router(routerConfig: router));
     await tester.pump();
@@ -34,6 +45,12 @@ void main() {
   });
 
   testWidgets('shows admin item for an authorized logged-in user', (tester) async {
+    await setDesktopSize(tester);
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
     authNotifier.user = AuthUser(
       steamId64: '76561198000000000',
       nickname: 'Mell',
