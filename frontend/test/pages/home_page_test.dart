@@ -3,14 +3,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:jbforsaken_web/pages/home_page.dart';
 
 void main() {
-  testWidgets('renders the hero, actions, and the coming-soon strip', (tester) async {
+  testWidgets('renders the JBForsaken hero and core actions', (tester) async {
     await tester.pumpWidget(const MaterialApp(home: HomePage()));
     await tester.pump();
 
     expect(find.text('JBFORSAKEN'), findsOneWidget);
-    expect(find.text('CS2 JAILBREAK'), findsOneWidget);
-    expect(find.text('ИГРАТЬ'), findsOneWidget);
-    expect(find.text('ПРАВИЛА'), findsOneWidget);
-    expect(find.text('Скоро'), findsOneWidget);
+    expect(find.text('CS2 • JAILBREAK • COMMUNITY'), findsOneWidget);
+    expect(find.text('ПОДКЛЮЧИТЬСЯ'), findsOneWidget);
+    expect(find.text('Экосистема сервера'), findsOneWidget);
   });
 }
