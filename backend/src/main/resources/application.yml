@@ -1,0 +1,47 @@
+server:
+  port: 5080
+  # Honor X-Forwarded-For/-Proto from the reverse proxy so request.getRemoteAddr()
+  # (used by RateLimitFilter) is the real client, not the proxy.
+  forward-headers-strategy: native
+
+spring:
+  application:
+    name: jbforsaken-web-api
+  jpa:
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+  flyway:
+    enabled: true
+    # Keep Flyway's bookkeeping table inside the jbf_web_ prefix, like every other table we own.
+    table: jbf_web_flyway_schema_history
+    # DB_NAME may point at the existing, non-empty shared game database; baseline at 0 so
+    # Flyway accepts it and still applies V1 onwards.
+    baseline-on-migrate: true
+    baseline-version: 0
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+
+logging:
+  level:
+    root: INFO
+
+cs2-server:
+  host: ${CS2_SERVER_HOST:127.0.0.1}
+  port: ${CS2_SERVER_PORT:27015}
+  poll-interval-seconds: 12
+
+app:
+  frontend-origin: "${FRONTEND_ORIGIN:http://localhost:5173}"
+
+steam-openid:
+  realm-url: "${APP_URL:http://127.0.0.1:5080}"
+  return-url: "${APP_URL:http://127.0.0.1:5080}/api/auth/steam/callback"
+
+jwt:
+  secret: "${JWT_SECRET:}"
+  expiration-minutes: 1440
