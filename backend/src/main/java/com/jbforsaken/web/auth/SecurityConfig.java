@@ -29,6 +29,7 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/me").authenticated()
+                .requestMatchers("/api/admin/**").authenticated()
                 .requestMatchers("/api/store/orders/**").authenticated()
                 .requestMatchers("/api/stats/me").authenticated()
                 .requestMatchers(HttpMethod.POST, "/api/clans/**").authenticated()
