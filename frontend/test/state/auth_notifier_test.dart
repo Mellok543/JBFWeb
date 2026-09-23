@@ -22,6 +22,9 @@ void main() {
       if (request.url.path == '/api/auth/me') {
         return http.Response('{"steamId64":"76561198000000000","nickname":"Mell","avatarUrl":null}', 200);
       }
+      if (request.url.path == '/api/admin/me') {
+        return http.Response('{"admin":false}', 200);
+      }
       return http.Response('not found', 404);
     });
     final notifier = AuthNotifier(client: ApiClient(client: mockClient));
@@ -56,6 +59,9 @@ void main() {
       if (request.url.path == '/api/auth/me') {
         return http.Response('{"steamId64":"1","nickname":"Stored","avatarUrl":null}', 200);
       }
+      if (request.url.path == '/api/admin/me') {
+        return http.Response('{"admin":true}', 200);
+      }
       return http.Response('not found', 404);
     });
     final notifier = AuthNotifier(client: ApiClient(client: mockClient));
@@ -64,6 +70,7 @@ void main() {
 
     expect(currentAuthToken, 'stored-jwt');
     expect(notifier.user?.nickname, 'Stored');
+    expect(notifier.isAdmin, isTrue);
   });
 
   test('isLoading resets to false when /api/auth/me fails with a non-401 error', () async {
