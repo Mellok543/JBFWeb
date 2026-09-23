@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'pages/auth_callback_page.dart';
+import 'pages/admin_page.dart';
 import 'pages/battlepass_page.dart';
 import 'pages/clans_page.dart';
 import 'pages/home_page.dart';
@@ -24,6 +25,7 @@ final GoRouter router = GoRouter(
         GoRoute(path: '/stats', builder: (context, state) => const StatsPage()),
         GoRoute(path: '/rules', builder: (context, state) => const RulesPage()),
         GoRoute(path: '/profile', builder: (context, state) => const ProfilePage()),
+        GoRoute(path: '/admin', builder: (context, state) => const AdminPage()),
       ],
     ),
     GoRoute(
