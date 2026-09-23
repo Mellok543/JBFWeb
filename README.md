@@ -13,6 +13,24 @@ JBFWeb/
 
 Сборочные каталоги `target/`, `build/`, IDE-файлы и логи не хранятся в репозитории.
 
+## Быстрый локальный запуск
+
+Без Docker и MySQL, для разработки и проверки интерфейса:
+
+```powershell
+.\run-local.ps1
+```
+
+Скрипт поднимет Spring Boot с H2 на `5080` и Flutter Web на `5173`.
+
+Для проверки именно MySQL:
+
+```powershell
+.\run-mysql.ps1
+```
+
+Этот вариант использует `docker-compose.yml` и MySQL 8.4.
+
 ## Backend
 
 ```powershell
