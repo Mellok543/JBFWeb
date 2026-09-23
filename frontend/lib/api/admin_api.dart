@@ -122,3 +122,68 @@ Future<List<Map<String, dynamic>>> fetchAdminAudit(ApiClient client) async {
   final raw = await client.getList('/api/admin/audit');
   return raw.map((e) => Map<String, dynamic>.from(e as Map)).toList();
 }
+
+
+Future<List<Map<String, dynamic>>> fetchAdminRules(ApiClient client) async {
+  final raw = await client.getList('/api/admin/rules');
+  return raw.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+}
+
+Future<Map<String, dynamic>> saveAdminRule(
+  ApiClient client, {
+  int? id,
+  required int sortOrder,
+  required String title,
+  required String body,
+  required bool active,
+}) {
+  final payload = {
+    'sortOrder': sortOrder,
+    'title': title,
+    'body': body,
+    'active': active,
+  };
+  return id == null
+      ? client.post('/api/admin/rules', body: payload)
+      : client.put('/api/admin/rules/$id', body: payload);
+}
+
+Future<void> deleteAdminRule(ApiClient client, int id) {
+  return client.delete('/api/admin/rules/$id');
+}
+
+Future<Map<String, dynamic>> createAdminSeason(
+  ApiClient client, {
+  required String code,
+  required String name,
+  required String startsAt,
+  required String endsAt,
+  required bool active,
+}) {
+  return client.post('/api/admin/battlepass/seasons', body: {
+    'code': code,
+    'name': name,
+    'startsAt': startsAt,
+    'endsAt': endsAt,
+    'active': active,
+  });
+}
+
+Future<Map<String, dynamic>> createAdminBattlePassLevel(
+  ApiClient client,
+  int seasonId, {
+  required int levelNumber,
+  required int xpRequired,
+  required String rewardTitle,
+}) {
+  return client.post('/api/admin/battlepass/seasons/$seasonId/levels', body: {
+    'levelNumber': levelNumber,
+    'xpRequired': xpRequired,
+    'rewardTitle': rewardTitle,
+  });
+}
+
+Future<List<Map<String, dynamic>>> fetchAdminBattlePassLevels(ApiClient client, int seasonId) async {
+  final raw = await client.getList('/api/admin/battlepass/seasons/$seasonId/levels');
+  return raw.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+}
