@@ -27,6 +27,14 @@ public class BattlePassSeason {
 
     protected BattlePassSeason() {}
 
+    public BattlePassSeason(String code, String name, Instant startsAt, Instant endsAt, boolean active) {
+        this.code = code;
+        this.name = name;
+        this.startsAt = startsAt;
+        this.endsAt = endsAt;
+        this.active = active;
+    }
+
     public Long getId() { return id; }
     public String getCode() { return code; }
     public String getName() { return name; }
