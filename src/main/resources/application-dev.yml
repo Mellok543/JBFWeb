@@ -1,0 +1,13 @@
+spring:
+  datasource:
+    url: jdbc:mysql://${DB_HOST:127.0.0.1}:${DB_PORT:3306}/${DB_NAME:jbforsaken_web}
+    username: ${DB_USER:root}
+    password: ${DB_PASSWORD:}
+  jpa:
+    hibernate:
+      # Fail fast at startup if entities drift from the Flyway migrations
+      # (matters once this runs against the real, shared database).
+      ddl-auto: validate
+logging:
+  level:
+    com.jbforsaken.web: DEBUG
