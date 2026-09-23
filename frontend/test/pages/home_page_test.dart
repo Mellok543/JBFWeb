@@ -11,5 +11,8 @@ void main() {
     expect(find.text('CS2 • JAILBREAK • COMMUNITY'), findsOneWidget);
     expect(find.text('ПОДКЛЮЧИТЬСЯ'), findsOneWidget);
     expect(find.text('Экосистема сервера'), findsOneWidget);
+
+    // Dispose HomePage so the server-status polling timer is cancelled.
+    await tester.pumpWidget(const SizedBox());
   });
 }
