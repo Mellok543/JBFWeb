@@ -39,6 +39,13 @@ public class StoreOrder {
         this.createdAt = createdAt;
     }
 
+    public void updateStatus(String status) {
+        this.status = status;
+        if ("PAID".equals(status) && paidAt == null) {
+            this.paidAt = Instant.now();
+        }
+    }
+
     public String getId() { return id; }
     public Long getSteamId64() { return steamId64; }
     public String getProductCode() { return productCode; }
