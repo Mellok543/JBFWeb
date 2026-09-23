@@ -391,27 +391,148 @@ class _Users extends StatelessWidget {
   );
 }
 
-class _World extends StatelessWidget {
+class _World extends StatefulWidget {
   const _World();
+
+  @override
+  State<_World> createState() => _WorldState();
+}
+
+class _WorldState extends State<_World> {
+  late Future<List<Map<String, dynamic>>> seasons;
+  late Future<List<Map<String, dynamic>>> clans;
+
+  @override
+  void initState() {
+    super.initState();
+    reload();
+  }
+
+  void reload() {
+    seasons = fetchAdminSeasons(apiClient);
+    clans = fetchAdminClans(apiClient);
+  }
+
+  Future<void> createSeason() async {
+    final code = TextEditingController();
+    final name = TextEditingController();
+    final starts = TextEditingController(text: DateTime.now().toUtc().toIso8601String());
+    final ends = TextEditingController(
+      text: DateTime.now().toUtc().add(const Duration(days: 90)).toIso8601String(),
+    );
+    bool active = true;
+
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Новый сезон Battle Pass'),
+          content: SizedBox(
+            width: 560,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(controller: code, decoration: const InputDecoration(labelText: 'Код, например S02')),
+                TextField(controller: name, decoration: const InputDecoration(labelText: 'Название')),
+                TextField(controller: starts, decoration: const InputDecoration(labelText: 'Начало (ISO 8601)')),
+                TextField(controller: ends, decoration: const InputDecoration(labelText: 'Конец (ISO 8601)')),
+                SwitchListTile(
+                  value: active,
+                  onChanged: (v) => setDialogState(() => active = v),
+                  title: const Text('Активный сезон'),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Отмена')),
+            FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Создать')),
+          ],
+        ),
+      ),
+    );
+
+    if (ok != true) return;
+    await createAdminSeason(
+      apiClient,
+      code: code.text,
+      name: name.text,
+      startsAt: starts.text,
+      endsAt: ends.text,
+      active: active,
+    );
+    setState(reload);
+  }
+
+  Future<void> addLevel(Map<String, dynamic> season) async {
+    final level = TextEditingController();
+    final xp = TextEditingController();
+    final reward = TextEditingController();
+
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Новый уровень — ${season['name']}'),
+        content: SizedBox(
+          width: 520,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(controller: level, decoration: const InputDecoration(labelText: 'Номер уровня')),
+              TextField(controller: xp, decoration: const InputDecoration(labelText: 'Требуется XP')),
+              TextField(controller: reward, decoration: const InputDecoration(labelText: 'Награда')),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Отмена')),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Добавить')),
+        ],
+      ),
+    );
+
+    if (ok != true) return;
+    await createAdminBattlePassLevel(
+      apiClient,
+      season['id'] as int,
+      levelNumber: int.tryParse(level.text) ?? 0,
+      xpRequired: int.tryParse(xp.text) ?? 0,
+      rewardTitle: reward.text,
+    );
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Уровень добавлен')));
+    }
+  }
+
   @override
   Widget build(BuildContext context) => Row(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Expanded(
         child: FutureBuilder<List<Map<String, dynamic>>>(
-          future: fetchAdminSeasons(apiClient),
+          future: seasons,
           builder: (context, s) {
             if (s.connectionState != ConnectionState.done) return const Center(child: CircularProgressIndicator());
             if (s.hasError) return _Error(s.error.toString());
             final rows = s.data ?? const [];
             return _Panel(
               title: 'Battle Pass сезоны',
+              headerAction: IconButton(
+                tooltip: 'Новый сезон',
+                onPressed: createSeason,
+                icon: const Icon(Icons.add_circle_outline),
+              ),
               children: [
                 for (final x in rows)
                   ListTile(
                     leading: Icon(x['active'] == true ? Icons.verified : Icons.event_outlined),
                     title: Text(x['name'].toString()),
                     subtitle: Text('${x['code']} • ${x['startsAt']} → ${x['endsAt']}'),
+                    trailing: IconButton(
+                      tooltip: 'Добавить уровень',
+                      onPressed: () => addLevel(x),
+                      icon: const Icon(Icons.add),
+                    ),
                   ),
               ],
             );
@@ -421,7 +542,7 @@ class _World extends StatelessWidget {
       const SizedBox(width: 14),
       Expanded(
         child: FutureBuilder<List<Map<String, dynamic>>>(
-          future: fetchAdminClans(apiClient),
+          future: clans,
           builder: (context, s) {
             if (s.connectionState != ConnectionState.done) return const Center(child: CircularProgressIndicator());
             if (s.hasError) return _Error(s.error.toString());
@@ -435,7 +556,10 @@ class _World extends StatelessWidget {
                     title: Text('[${x['tag']}] ${x['name']}'),
                     subtitle: Text('Owner: ${x['ownerSteamId64']}'),
                     trailing: IconButton(
-                      onPressed: () => deleteAdminClan(apiClient, x['id'] as int),
+                      onPressed: () async {
+                        await deleteAdminClan(apiClient, x['id'] as int);
+                        setState(reload);
+                      },
                       icon: const Icon(Icons.delete_outline),
                     ),
                   ),
@@ -476,7 +600,8 @@ class _Audit extends StatelessWidget {
 class _Panel extends StatelessWidget {
   final String title;
   final List<Widget> children;
-  const _Panel({required this.title, required this.children});
+  final Widget? headerAction;
+  const _Panel({required this.title, required this.children, this.headerAction});
 
   @override
   Widget build(BuildContext context) => Container(
@@ -487,7 +612,10 @@ class _Panel extends StatelessWidget {
     ),
     child: Column(
       children: [
-        ListTile(title: Text(title, style: const TextStyle(fontWeight: FontWeight.w900))),
+        ListTile(
+          title: Text(title, style: const TextStyle(fontWeight: FontWeight.w900)),
+          trailing: headerAction,
+        ),
         const Divider(height: 1),
         Expanded(child: ListView(children: children)),
       ],
