@@ -92,11 +92,14 @@ class MainLayout extends StatelessWidget {
                         color: JbfColors.panel1,
                         onSelected: (value) {
                           if (value == 'profile') context.go('/profile');
+                          if (value == 'admin') context.go('/admin');
                           if (value == 'logout') authNotifier.logout();
                         },
-                        itemBuilder: (_) => const [
-                          PopupMenuItem(value: 'profile', child: Text('Профиль')),
-                          PopupMenuItem(value: 'logout', child: Text('Выйти')),
+                        itemBuilder: (_) => [
+                          const PopupMenuItem(value: 'profile', child: Text('Профиль')),
+                          if (authNotifier.isAdmin)
+                            const PopupMenuItem(value: 'admin', child: Text('Админ-панель')),
+                          const PopupMenuItem(value: 'logout', child: Text('Выйти')),
                         ],
                         child: Row(
                           children: [
