@@ -3,6 +3,7 @@ package com.jbforsaken.web.admin;
 import com.jbforsaken.web.battlepass.*;
 import com.jbforsaken.web.clan.*;
 import com.jbforsaken.web.news.*;
+import com.jbforsaken.web.rules.*;
 import com.jbforsaken.web.store.*;
 import com.jbforsaken.web.user.*;
 import java.time.Instant;
@@ -26,6 +27,8 @@ public class AdminController {
     private final BattlePassSeasonRepository seasons;
     private final BattlePassLevelRepository levels;
     private final ClanRepository clans;
+    private final ClanMemberRepository clanMembers;
+    private final RuleItemRepository rules;
 
     public AdminController(
             AdminGuard guard,
@@ -36,7 +39,9 @@ public class AdminController {
             StoreOrderRepository orders,
             BattlePassSeasonRepository seasons,
             BattlePassLevelRepository levels,
-            ClanRepository clans) {
+            ClanRepository clans,
+            ClanMemberRepository clanMembers,
+            RuleItemRepository rules) {
         this.guard = guard;
         this.audit = audit;
         this.users = users;
@@ -46,6 +51,8 @@ public class AdminController {
         this.seasons = seasons;
         this.levels = levels;
         this.clans = clans;
+        this.clanMembers = clanMembers;
+        this.rules = rules;
     }
 
     @GetMapping("/me")
@@ -62,7 +69,8 @@ public class AdminController {
             "products", products.count(),
             "orders", orders.count(),
             "clans", clans.count(),
-            "seasons", seasons.count()
+            "seasons", seasons.count(),
+            "rules", rules.count()
         );
     }
 
@@ -103,6 +111,41 @@ public class AdminController {
         long admin = guard.requireAdmin(auth);
         news.deleteById(id);
         log(admin, "DELETE", "NEWS", id.toString(), null);
+    }
+
+    @GetMapping("/rules")
+    public List<RuleItem> rules(Authentication auth) {
+        guard.requireAdmin(auth);
+        return rules.findAllByOrderBySortOrderAsc();
+    }
+
+    @PostMapping("/rules")
+    @Transactional
+    public RuleItem createRule(Authentication auth, @RequestBody RuleRequest request) {
+        long admin = guard.requireAdmin(auth);
+        RuleItem item = rules.save(new RuleItem(request.sortOrder(), requireText(request.title(), "title"),
+            requireText(request.body(), "body"), request.active()));
+        log(admin, "CREATE", "RULE", item.getId().toString(), item.getTitle());
+        return item;
+    }
+
+    @PutMapping("/rules/{id}")
+    @Transactional
+    public RuleItem updateRule(Authentication auth, @PathVariable Long id, @RequestBody RuleRequest request) {
+        long admin = guard.requireAdmin(auth);
+        RuleItem item = rules.findById(id).orElseThrow();
+        item.update(request.sortOrder(), requireText(request.title(), "title"),
+            requireText(request.body(), "body"), request.active());
+        log(admin, "UPDATE", "RULE", id.toString(), item.getTitle());
+        return item;
+    }
+
+    @DeleteMapping("/rules/{id}")
+    @Transactional
+    public void deleteRule(Authentication auth, @PathVariable Long id) {
+        long admin = guard.requireAdmin(auth);
+        rules.deleteById(id);
+        log(admin, "DELETE", "RULE", id.toString(), null);
     }
 
     @GetMapping("/products")
@@ -212,6 +255,7 @@ public class AdminController {
     @Transactional
     public void deleteClan(Authentication auth, @PathVariable Long id) {
         long admin = guard.requireAdmin(auth);
+        clanMembers.deleteByClanId(id);
         clans.deleteById(id);
         log(admin, "DELETE", "CLAN", id.toString(), null);
     }
@@ -232,6 +276,7 @@ public class AdminController {
     }
 
     public record NewsRequest(String title, String body, boolean pinned) {}
+    public record RuleRequest(int sortOrder, String title, String body, boolean active) {}
     public record ProductRequest(String code, String name, String description, String category, int priceCents, boolean active, int sortOrder) {}
     public record OrderStatusRequest(String status) {}
     public record SeasonRequest(String code, String name, Instant startsAt, Instant endsAt, boolean active) {}
