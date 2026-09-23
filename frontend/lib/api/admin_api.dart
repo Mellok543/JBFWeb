@@ -19,6 +19,12 @@ Future<List<Map<String, dynamic>>> fetchAdminUsers(ApiClient client) async {
   return raw.map((e) => Map<String, dynamic>.from(e as Map)).toList();
 }
 
+Future<List<Map<String, dynamic>>> searchAdminUsers(ApiClient client, String query) async {
+  final q = Uri.encodeQueryComponent(query.trim());
+  final raw = await client.getList('/api/admin/users/search?q=$q');
+  return raw.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+}
+
 Future<List<Map<String, dynamic>>> fetchAdminNews(ApiClient client) async {
   final raw = await client.getList('/api/admin/news');
   return raw.map((e) => Map<String, dynamic>.from(e as Map)).toList();
