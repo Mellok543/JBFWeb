@@ -1,0 +1,22 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: jbforsaken-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: jbforsaken_web
+      MYSQL_USER: jbforsaken
+      MYSQL_PASSWORD: jbforsaken_dev
+      MYSQL_ROOT_PASSWORD: root_dev
+    ports:
+      - "3306:3306"
+    volumes:
+      - jbforsaken_mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot_dev"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  jbforsaken_mysql:
