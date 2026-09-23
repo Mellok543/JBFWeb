@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../config.dart';
+import '../api/api_client.dart';
+import '../api/portal_api.dart';
 import '../theme/jbf_theme.dart';
 import '../widgets/page_shell.dart';
 import '../widgets/server_status.dart';
@@ -27,6 +29,14 @@ class HomePage extends StatelessWidget {
               _Hero(narrow: narrow),
               const SizedBox(height: 26),
               const ServerStatus(),
+              const SizedBox(height: 56),
+              const _SectionHeading(
+                eyebrow: 'НОВОСТИ',
+                title: 'Последние обновления',
+                subtitle: 'Новости загружаются напрямую из Spring backend.',
+              ),
+              const SizedBox(height: 20),
+              const _NewsSection(),
               const SizedBox(height: 56),
               const _SectionHeading(
                 eyebrow: 'JBFORSAKEN',
@@ -345,6 +355,71 @@ class _FeedPanel extends StatelessWidget {
           ],
         ],
       ),
+    );
+  }
+}
+
+
+class _NewsSection extends StatefulWidget {
+  const _NewsSection();
+
+  @override
+  State<_NewsSection> createState() => _NewsSectionState();
+}
+
+class _NewsSectionState extends State<_NewsSection> {
+  late Future<List<Map<String, dynamic>>> _future;
+
+  @override
+  void initState() {
+    super.initState();
+    _future = fetchNews(apiClient);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: _future,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const LinearProgressIndicator();
+        }
+
+        if (snapshot.hasError) {
+          return const _FeedPanel(
+            title: 'Новости временно недоступны',
+            icon: Icons.cloud_off_outlined,
+            rows: [('Backend', 'Остальная главная продолжает работать.')],
+          );
+        }
+
+        final items = snapshot.data ?? const [];
+        if (items.isEmpty) {
+          return const _FeedPanel(
+            title: 'Новостей пока нет',
+            icon: Icons.article_outlined,
+            rows: [('JBFORSAKEN', 'Первая публикация появится здесь.')],
+          );
+        }
+
+        return Wrap(
+          spacing: 14,
+          runSpacing: 14,
+          children: [
+            for (final item in items.take(3))
+              SizedBox(
+                width: 370,
+                child: _FeedPanel(
+                  title: item['title']?.toString() ?? 'JBFORSAKEN',
+                  icon: item['pinned'] == true ? Icons.push_pin_outlined : Icons.article_outlined,
+                  rows: [
+                    (item['pinned'] == true ? 'Закреплено' : 'Новость', item['body']?.toString() ?? ''),
+                  ],
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 }
