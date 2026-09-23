@@ -364,30 +364,113 @@ class _OrdersState extends State<_Orders> {
   );
 }
 
-class _Users extends StatelessWidget {
+class _Users extends StatefulWidget {
   const _Users();
+
   @override
-  Widget build(BuildContext context) => FutureBuilder<List<Map<String, dynamic>>>(
-    future: fetchAdminUsers(apiClient),
-    builder: (context, s) {
-      if (s.connectionState != ConnectionState.done) return const Center(child: CircularProgressIndicator());
-      if (s.hasError) return _Error(s.error.toString());
-      final rows = s.data ?? const [];
-      return ListView.builder(
-        itemCount: rows.length,
-        itemBuilder: (context, i) {
-          final x = rows[i];
-          return ListTile(
-            leading: CircleAvatar(
-              backgroundImage: x['avatarUrl'] == null ? null : NetworkImage(x['avatarUrl'].toString()),
-              child: x['avatarUrl'] == null ? const Icon(Icons.person_outline) : null,
+  State<_Users> createState() => _UsersState();
+}
+
+class _UsersState extends State<_Users> {
+  final search = TextEditingController();
+  late Future<List<Map<String, dynamic>>> future;
+
+  @override
+  void initState() {
+    super.initState();
+    future = fetchAdminUsers(apiClient);
+  }
+
+  @override
+  void dispose() {
+    search.dispose();
+    super.dispose();
+  }
+
+  void runSearch() {
+    setState(() {
+      final q = search.text.trim();
+      future = q.isEmpty ? fetchAdminUsers(apiClient) : searchAdminUsers(apiClient, q);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => Column(
+    children: [
+      Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: search,
+              onSubmitted: (_) => runSearch(),
+              decoration: const InputDecoration(
+                labelText: 'Поиск игрока',
+                hintText: 'Ник или SteamID64',
+                prefixIcon: Icon(Icons.search),
+              ),
             ),
-            title: Text(x['nickname']?.toString() ?? x['steamId64'].toString()),
-            subtitle: Text('SteamID64: ${x['steamId64']} • ${x['lastLoginAt']}'),
-          );
-        },
-      );
-    },
+          ),
+          const SizedBox(width: 10),
+          FilledButton(
+            onPressed: runSearch,
+            child: const Text('НАЙТИ'),
+          ),
+          const SizedBox(width: 8),
+          TextButton(
+            onPressed: () {
+              search.clear();
+              runSearch();
+            },
+            child: const Text('СБРОСИТЬ'),
+          ),
+        ],
+      ),
+      const SizedBox(height: 12),
+      Expanded(
+        child: FutureBuilder<List<Map<String, dynamic>>>(
+          future: future,
+          builder: (context, s) {
+            if (s.connectionState != ConnectionState.done) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (s.hasError) return _Error(s.error.toString());
+
+            final rows = s.data ?? const [];
+            if (rows.isEmpty) {
+              return const Center(
+                child: Text(
+                  'Игроки не найдены',
+                  style: TextStyle(color: JbfColors.textSecondary),
+                ),
+              );
+            }
+
+            return ListView.builder(
+              itemCount: rows.length,
+              itemBuilder: (context, i) {
+                final x = rows[i];
+                return ListTile(
+                  leading: CircleAvatar(
+                    backgroundImage: x['avatarUrl'] == null
+                        ? null
+                        : NetworkImage(x['avatarUrl'].toString()),
+                    child: x['avatarUrl'] == null
+                        ? const Icon(Icons.person_outline)
+                        : null,
+                  ),
+                  title: Text(
+                    x['nickname']?.toString() ?? x['steamId64'].toString(),
+                  ),
+                  subtitle: Text(
+                    'SteamID64: ${x['steamId64']} • Последний вход: ${x['lastLoginAt']}',
+                  ),
+                );
+              },
+            );
+          },
+        ),
+      ),
+    ],
   );
 }
 
