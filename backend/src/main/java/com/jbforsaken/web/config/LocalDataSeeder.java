@@ -3,6 +3,7 @@ package com.jbforsaken.web.config;
 import com.jbforsaken.web.battlepass.*;
 import com.jbforsaken.web.news.*;
 import com.jbforsaken.web.store.*;
+import com.jbforsaken.web.rules.*;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import org.springframework.boot.CommandLineRunner;
@@ -19,7 +20,8 @@ public class LocalDataSeeder {
             NewsPostRepository news,
             StoreProductRepository products,
             BattlePassSeasonRepository seasons,
-            BattlePassLevelRepository levels) {
+            BattlePassLevelRepository levels,
+            RuleItemRepository rules) {
         return args -> {
             if (news.count() == 0) {
                 news.save(new NewsPost(
@@ -52,6 +54,17 @@ public class LocalDataSeeder {
                     "Игровая валюта для серверных систем и косметики.",
                     "CREDITS", 14900, 30
                 ));
+            }
+
+            if (rules.count() == 0) {
+                rules.save(new RuleItem(10, "Общие правила",
+                    "Уважайте других игроков и администрацию.\nЗапрещены намеренные помехи игровому процессу, эксплуатация багов и обход ограничений.\nНезнание правил не освобождает от ответственности.", true));
+                rules.save(new RuleItem(20, "Заключённые",
+                    "Выполняйте корректные приказы командира в рамках режима.\nИгровые действия, связанные с побегом, бунтом и LR, регулируются правилами конкретной ситуации.\nЗапрещено намеренно затягивать раунд без игровой цели.", true));
+                rules.save(new RuleItem(30, "Охрана и командир",
+                    "CT обязан понимать правила Jailbreak до игры за охрану.\nКомандир отвечает за понятные приказы и проведение раунда.\nЗапрещены необоснованные убийства заключённых и злоупотребление полномочиями.", true));
+                rules.save(new RuleItem(40, "Чат и коммуникация",
+                    "Не используйте голосовой и текстовый чат для спама и намеренных помех.\nЗапрещена публикация вредоносных ссылок и персональных данных других людей.\nКонфликты с администрацией решаются через установленные каналы проекта.", true));
             }
 
             if (seasons.count() == 0) {
