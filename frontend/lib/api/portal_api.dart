@@ -40,3 +40,9 @@ Future<List<Map<String, dynamic>>> fetchTopStats(ApiClient client, {String metri
 Future<Map<String, dynamic>> fetchMyStats(ApiClient client) {
   return client.get('/api/stats/me');
 }
+
+
+Future<List<Map<String, dynamic>>> fetchRules(ApiClient client) async {
+  final raw = await client.getList('/api/rules');
+  return raw.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+}
