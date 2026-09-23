@@ -37,6 +37,7 @@ cs2-server:
 
 app:
   frontend-origin: "${FRONTEND_ORIGIN:http://localhost:5173}"
+  admin-steam-ids: "${ADMIN_STEAM_IDS:}"
 
 steam-openid:
   realm-url: "${APP_URL:http://127.0.0.1:5080}"
