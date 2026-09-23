@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../api/api_client.dart';
 import '../api/auth_api.dart';
+import '../api/admin_api.dart';
 
 const String _tokenPrefsKey = 'jbf_auth_token';
 
@@ -10,6 +11,7 @@ class AuthNotifier extends ChangeNotifier {
 
   AuthUser? user;
   bool isLoading = false;
+  bool isAdmin = false;
 
   AuthNotifier({ApiClient? client}) : _client = client ?? apiClient;
 
@@ -35,6 +37,7 @@ class AuthNotifier extends ChangeNotifier {
   Future<void> logout() async {
     currentAuthToken = null;
     user = null;
+    isAdmin = false;
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_tokenPrefsKey);
     notifyListeners();
@@ -45,6 +48,7 @@ class AuthNotifier extends ChangeNotifier {
     notifyListeners();
     try {
       user = await fetchMe(_client);
+      isAdmin = user != null ? await fetchIsAdmin(_client) : false;
     } finally {
       isLoading = false;
       notifyListeners();
